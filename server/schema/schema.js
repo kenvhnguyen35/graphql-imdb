@@ -6,14 +6,15 @@ const { GraphQLObjectType,
     GraphQLString, 
     GraphQLSchema, 
     GraphQLID, 
-    GraphQLInt } = graphql;
+    GraphQLInt, 
+    GraphQLList } = graphql;
 
 // dummy data
 var books = [
     { name: "Name of the wind", genre: "Fantasy", id: "1", author: "1"},
-    { name: "The Final Empire", genre: "Fantasy", id: "2"},
+    { name: "The Final Empire", genre: "Fantasy", id: "2", author: "2"},
     { name: "The long earth", genre: "Sci-fi", id: "3", author: "1"},
-    { name: "Homo Deus", genre: "Non Fiction", id: "4"},
+    { name: "Homo Deus", genre: "Non Fiction", id: "4", author: "3"},
 ];
 var authors = [
     { name: "Steven Danish", age: 45, id: "1"},
@@ -23,7 +24,7 @@ var authors = [
 
 const BookType = new GraphQLObjectType({
     name: 'Book',
-    fields: () => ({
+    fields: () => ({ // This is interesting, why do we need this to be a function? because we need this to be 'runtime'! just try to replace the function with just simple object instead
         id: { type: GraphQLID },
         name: { type: GraphQLString },
         genre: { type: GraphQLString },
@@ -40,7 +41,12 @@ const AuthorType = new GraphQLObjectType({
     fields: () => ({
         id: { type: GraphQLID },
         name: { type: GraphQLString },
-        age: { type: GraphQLInt }
+        age: { type: GraphQLInt },
+        books: { type: new GraphQLList(BookType),
+            resolve(parent, args) {
+                return _.filter(books, { author: parent.id })
+            }
+        }
     })
 });
 
@@ -56,13 +62,13 @@ const RouteQuery = new GraphQLObjectType({
                 return _.find(books, { id: args.id });
             }
         },
-        // author: { 
-        //     type: AuthorType,
-        //     args: {id: { type: GraphQLID }},
-        //     resolve(parent, args) {
-        //         return _.find(authors, { id: args.id })
-        //     }
-        // }
+        author: { 
+            type: AuthorType,
+            args: {id: { type: GraphQLID }},
+            resolve(parent, args) {
+                return _.find(authors, { id: args.id })
+            }
+        }
     }
 }); 
 
